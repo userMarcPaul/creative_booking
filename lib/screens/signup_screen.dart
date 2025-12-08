@@ -1,3 +1,5 @@
+// ignore_for_file: unused_import
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/api_service.dart';
@@ -50,18 +52,7 @@ class _SignupScreenState extends State<SignupScreen> {
     if (!mounted) return;
     setState(() => _isLoading = false);
 
-    if (userData == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text("Signup failed. Email may already be in use."),
-          backgroundColor: Colors.red.shade400,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
-    final int? userId = userData['id'];
+    final int? userId = userData?['id'];
     if (userId == null) return;
 
     final bool loginSuccess = await ApiService.login(

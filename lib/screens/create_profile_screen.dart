@@ -161,7 +161,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
               controller: _rateController,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
-                labelText: "Hourly Rate (\$)", 
+                labelText: "Hourly Rate (₱)", 
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.attach_money),
               ),

@@ -1,6 +1,5 @@
-from django.urls import path # type: ignore
-from .views import AdminPendingCreatives, admin_manage_creative, get_chat_messages, send_chat_message # Import the new views
-from .views import get_booking_contract, sign_contract
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from .views import (
     RegisterView, LoginView,
     IndustryList, SubCategoryList, CreativeList,
@@ -12,10 +11,26 @@ from .views import (
     save_user_interests, 
     recommended_creatives,
     VerifyEmailOTP, 
-    ResendEmailOTP
+    ResendEmailOTP,
+    # Admin Views
+    AdminPendingCreatives, admin_manage_creative,
+    # Contract Views
+    get_booking_contract, sign_contract,
+    # Chat ViewSet
+    ChatMessageViewSet 
 )
 
+# 1. Create a Router
+router = DefaultRouter()
+router.register(r'messages', ChatMessageViewSet, basename='chatmessage')
+
 urlpatterns = [
+    # --- Router URLs ---
+    path('', include(router.urls)),
+
+    # --- NEW: Nested Chat Path (Fixes the 404 Error) ---
+    path('bookings/<int:booking_id>/messages/', ChatMessageViewSet.as_view({'get': 'list', 'post': 'create'}), name='booking-messages'),
+
     # Auth
     path('register/', RegisterView.as_view(), name='register'),
     path('login/', LoginView.as_view(), name='login'),
@@ -29,7 +44,7 @@ urlpatterns = [
     path('subcategories/', SubCategoryList.as_view(), name='subcategory-list'),
     path('creatives/', CreativeList.as_view(), name='creative-list'),
 
-    # --- NEW: Recommendations & Interests ---
+    # Recommendations & Interests
     path('save-interests/', save_user_interests, name='save-interests'),
     path('creatives/recommended/', recommended_creatives, name='recommended-creatives'),
 
@@ -52,14 +67,11 @@ urlpatterns = [
     path('create-profile/', CreateCreativeProfile.as_view(), name='create-profile'),
     path('creative-profile/', CreativeProfileDetail.as_view(), name='creative-profile-detail'),
 
+    # Contract
     path('contract/booking/<int:booking_id>/', get_booking_contract, name='get-contract'),
     path('contract/sign/<int:contract_id>/', sign_contract, name='sign-contract'),
 
-    #admin
+    # Admin
     path('admin/pending-creatives/', AdminPendingCreatives.as_view(), name='admin-pending-list'),
     path('admin/manage-creative/<int:pk>/', admin_manage_creative, name='admin-manage-creative'),
-
-    #chat
-    path("chat/<int:booking_id>/", get_chat_messages),
-path("chat/<int:booking_id>/send/", send_chat_message),
 ]

@@ -3,9 +3,11 @@ from django.shortcuts import get_object_or_404 # type: ignore
 from rest_framework.views import APIView # type: ignore
 from rest_framework.decorators import api_view # pyright: ignore[reportMissingImports]
 from rest_framework.response import Response # type: ignore
-from rest_framework import status, generics, filters # type: ignore
-from django.utils import timezone # pyright: ignore[reportMissingModuleSource]
-from .utils import send_otp_email
+from rest_framework import status, generics, filters, viewsets
+from django.utils import timezone
+
+from .utils import send_otp_email 
+from .models import ChatMessage, Contract
 from .models import (
     User,
     Contract,
@@ -17,8 +19,7 @@ from .models import (
     Order,
     ServicePackage,
     EmailOTP,
-    UserInterest,
-    ChatMessage # Ensure this is imported
+    UserInterest, # Ensure this is imported
 )
 from .serializers import (
     ContractSerializer,
@@ -30,6 +31,7 @@ from .serializers import (
     ProductSerializer,
     OrderSerializer,
     ServicePackageSerializer,
+    ChatMessageSerializer,
 )
 
 # ==========================
@@ -50,7 +52,6 @@ class RegisterView(generics.CreateAPIView):
 
         # Send OTP to email
         send_otp_email(user.email, code)
-
 
 
 class LoginView(APIView):
@@ -109,7 +110,6 @@ class ResendEmailOTP(APIView):
         otp_obj.generate_otp()
         send_otp_email(otp_obj.user.email, otp_obj.otp_code)
         return Response({"message": "OTP resent"}, status=200)
-
 
 
 # ==========================
@@ -199,10 +199,6 @@ class BookingDetail(generics.RetrieveUpdateDestroyAPIView):
 # ==========================
 
 class ProductList(generics.ListCreateAPIView):
-    """
-    GET /api/products/?creative_id=3   -> list products
-    POST /api/products/                -> create product
-    """
     serializer_class = ProductSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ["name"]
@@ -216,12 +212,6 @@ class ProductList(generics.ListCreateAPIView):
 
 
 class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
-    """
-    GET    /api/products/<pk>/ -> retrieve single product
-    PUT    /api/products/<pk>/ -> full update
-    PATCH  /api/products/<pk>/ -> partial update
-    DELETE /api/products/<pk>/ -> delete product
-    """
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
 
@@ -248,7 +238,6 @@ class OrderList(generics.ListCreateAPIView):
         total = product.price * quantity
         serializer.save(total_price=total)
 
-# --- NEW: ORDER DETAIL (Required for updating order status) ---
 class OrderDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
@@ -271,7 +260,6 @@ class ServicePackageList(generics.ListCreateAPIView):
 # PROFILE VIEWS
 # ==========================
 
-# 7. Create Creative Profile (Handles existing profiles gracefully)
 class CreateCreativeProfile(APIView):
     def post(self, request):
         user_id = request.data.get("user")
@@ -285,14 +273,12 @@ class CreateCreativeProfile(APIView):
 
         serializer = CreativeProfileSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            # For now, we trust the user_id sent from frontend.
             serializer.save(user_id=user_id, is_verified=False)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# 8. Fetch Creative Profile by user_id
 class CreativeProfileDetail(generics.RetrieveAPIView):
     serializer_class = CreativeProfileSerializer
 
@@ -302,14 +288,11 @@ class CreativeProfileDetail(generics.RetrieveAPIView):
 
 
 # =========================================================
-#  NEW VIEWS FOR RECOMMENDATIONS (Add this section!)
+#  RECOMMENDATIONS & INTERESTS
 # =========================================================
 
 @api_view(['POST'])
 def save_user_interests(request):
-    """
-    Expects JSON: { "user_id": 1, "subcategory_ids": [10, 12, 15] }
-    """
     user_id = request.data.get('user_id')
     subcategory_ids = request.data.get('subcategory_ids', [])
 
@@ -317,7 +300,7 @@ def save_user_interests(request):
         return Response({"error": "User ID required"}, status=400)
 
     try:
-        # 1. Clear old interests to avoid duplicates
+        # 1. Clear old interests
         UserInterest.objects.filter(user_id=user_id).delete()
 
         # 2. Add new interests
@@ -332,9 +315,6 @@ def save_user_interests(request):
 
 @api_view(['GET'])
 def recommended_creatives(request):
-    """
-    URL: /api/creatives/recommended/?user_id=1
-    """
     user_id = request.query_params.get('user_id')
 
     if not user_id:
@@ -346,32 +326,31 @@ def recommended_creatives(request):
     if not interested_sub_ids:
         return Response([], status=200)
 
-    # 2. Find Creatives in those categories
-    # exclude(user_id=user_id) ensures the user doesn't see themselves if they are a creative
+    # 2. Find Creatives in those categories (excluding self)
     creatives = CreativeProfile.objects.filter(sub_category_id__in=interested_sub_ids).exclude(user_id=user_id)
 
     # 3. Serialize and return
     serializer = CreativeProfileSerializer(creatives, many=True, context={'request': request})
     return Response(serializer.data, status=200)
 
-# Generate or Get Contract for a Booking
+# ==========================
+# CONTRACT VIEWS
+# ==========================
+
 @api_view(['GET'])
 def get_booking_contract(request, booking_id):
-    # 1. Check if booking exists
     try:
         booking = Booking.objects.get(id=booking_id)
     except Booking.DoesNotExist:
         return Response({"error": "Booking not found"}, status=404)
 
-    # 2. Check if contract exists, if not, create one automatically
     contract, created = Contract.objects.get_or_create(booking=booking)
     
     if created:
-        # Generate dynamic legal text
         client_name = booking.client.username
         creative_name = booking.creative.user.username
         date = booking.booking_date
-        price = booking.creative.hourly_rate # Or package price
+        price = booking.creative.hourly_rate 
         
         contract.body_text = f"""
 CONTRACT OF SERVICE AGREEMENT
@@ -381,22 +360,20 @@ CLIENT: {client_name}
 PROVIDER: {creative_name}
 
 1. SERVICES
-The Provider agrees to perform services on {date} as requested in the booking requirements.
+The Provider agrees to perform services on {date} as requested.
 
 2. PAYMENT
-The Client agrees to pay the rate of ${price} per hour/day upon completion.
+The Client agrees to pay the rate of ${price} per hour/day.
 
 3. CANCELLATION
 Cancellations made less than 24 hours before the booking time may incur a fee.
-
-By clicking 'Accept', both parties agree to these terms.
         """
         contract.save()
 
     serializer = ContractSerializer(contract)
     return Response(serializer.data)
 
-# Sign Contract
+
 @api_view(['POST'])
 def sign_contract(request, contract_id):
     try:
@@ -404,8 +381,6 @@ def sign_contract(request, contract_id):
     except Contract.DoesNotExist:
         return Response({"error": "Contract not found"}, status=404)
 
-    # Determine who is signing (based on logged in user)
-    # For simplicity, we just toggle the flag sent in body, but real app should check request.user
     role = request.data.get('role') # 'client' or 'creative'
     
     if role == 'client':
@@ -418,28 +393,19 @@ def sign_contract(request, contract_id):
     contract.save()
     return Response({"message": "Contract signed successfully"})
 
-# ... existing imports ...
 
 # ==========================
 # ADMIN VIEWS
 # ==========================
 
 class AdminPendingCreatives(generics.ListAPIView):
-    """
-    Returns a list of CreativeProfiles where is_verified = False
-    """
     serializer_class = CreativeProfileSerializer
     
     def get_queryset(self):
-        # In a real app, verify request.user.role == 'admin' here
         return CreativeProfile.objects.filter(is_verified=False).order_by('-created_at')
 
 @api_view(['POST'])
 def admin_manage_creative(request, pk):
-    """
-    POST /api/admin/creative/<pk>/
-    Body: { "action": "approve" } or { "action": "decline" }
-    """
     profile = get_object_or_404(CreativeProfile, pk=pk)
     action = request.data.get('action')
 
@@ -449,24 +415,37 @@ def admin_manage_creative(request, pk):
         return Response({"message": "Profile approved successfully"}, status=200)
     
     elif action == 'decline':
-        # Delete the profile (User stays, but they lose creative status)
         profile.delete()
         return Response({"message": "Profile declined and removed"}, status=200)
 
     return Response({"error": "Invalid action"}, status=400)
-#chat
-@api_view(['GET'])
-def get_chat_messages(request, booking_id):
-    chat = ChatMessage.objects.filter(booking_id=booking_id).order_by('created_at')
-    data = [{"message": c.message, "isMe": c.sender_id == request.user.id} for c in chat]
-    return Response(data)
 
-@api_view(['POST'])
-def send_chat_message(request, booking_id):
-    message = request.data.get("message")
-    ChatMessage.objects.create(
-        booking_id=booking_id,
-        sender=request.user,
-        message=message
-    )
-    return Response({"status": "sent"})
+
+# ==========================
+# CHAT / MESSAGING VIEWSET
+# ==========================
+
+# In backend/core/views.py
+
+class ChatMessageViewSet(viewsets.ModelViewSet):
+    queryset = ChatMessage.objects.all()
+    serializer_class = ChatMessageSerializer
+
+    def get_queryset(self):
+        # Filter messages by the booking ID found in the URL or Query Params
+        queryset = super().get_queryset()
+        booking_id = self.kwargs.get('booking_id') or self.request.query_params.get('booking_id')
+        
+        if booking_id:
+            queryset = queryset.filter(booking_id=booking_id).order_by('created_at')
+        return queryset
+
+    def perform_create(self, serializer):
+        # 1. Get the booking ID from the URL (e.g., /bookings/4/messages/)
+        booking_id = self.kwargs.get('booking_id')
+
+        # 2. Inject the booking_id into the save method so the database knows which booking this belongs to
+        if booking_id:
+            serializer.save(booking_id=booking_id)
+        else:
+            serializer.save()

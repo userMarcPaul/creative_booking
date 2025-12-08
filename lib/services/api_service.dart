@@ -21,47 +21,46 @@ class ApiService {
     }
   }
 
-
   // ===========================================================================
   // OTP VERIFICATION
   // ===========================================================================
 
-static Future<bool> verifyOTP({required int userId, required String otp}) async {
-  try {
-    final url = Uri.parse('$baseUrl/verify-email/');
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        "user_id": userId,
-        "otp": otp,
-      }),
-    );
+  static Future<bool> verifyOTP({required int userId, required String otp}) async {
+    try {
+      final url = Uri.parse('$baseUrl/verify-email/');
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          "user_id": userId,
+          "otp": otp,
+        }),
+      );
 
-    return response.statusCode == 200;
-  } catch (e) {
-    print("Verify OTP error: $e");
-    return false;
+      return response.statusCode == 200;
+    } catch (e) {
+      print("Verify OTP error: $e");
+      return false;
+    }
   }
-}
 
-static Future<bool> resendOTP({required int userId}) async {
-  try {
-    final url = Uri.parse('$baseUrl/resend-otp/');
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        "user_id": userId,
-      }),
-    );
+  static Future<bool> resendOTP({required int userId}) async {
+    try {
+      final url = Uri.parse('$baseUrl/resend-otp/');
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          "user_id": userId,
+        }),
+      );
 
-    return response.statusCode == 200;
-  } catch (e) {
-    print("Resend OTP error: $e");
-    return false;
+      return response.statusCode == 200;
+    } catch (e) {
+      print("Resend OTP error: $e");
+      return false;
+    }
   }
-}
 
   // ===========================================================================
   // AUTHENTICATION
@@ -91,45 +90,110 @@ static Future<bool> resendOTP({required int userId}) async {
   }
 
   // ApiService.register
-static Future<Map<String, dynamic>?> register(
-  String username,
-  String email,
-  String password,
-  String firstName,
-  String lastName,
-  String role,
-) async {
-  final url = Uri.parse('$baseUrl/register/');
-  try {
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'username': username,
-        'email': email,
-        'password': password,
-        'first_name': firstName,
-        'last_name': lastName,
-        'role': role,
-      }),
-    );
+  static Future<Map<String, dynamic>?> register(
+    String username,
+    String email,
+    String password,
+    String firstName,
+    String lastName,
+    String role,
+  ) async {
+    final url = Uri.parse('$baseUrl/register/');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'username': username,
+          'email': email,
+          'password': password,
+          'first_name': firstName,
+          'last_name': lastName,
+          'role': role,
+        }),
+      );
 
-    if (response.statusCode == 201) {
-      return json.decode(response.body); // 👈 return user JSON
-    } else {
-      print("Register Failed: ${response.statusCode}");
-      print("Server Response: ${response.body}");
+      if (response.statusCode == 201) {
+        return json.decode(response.body); // 👈 return user JSON
+      } else {
+        print("Register Failed: ${response.statusCode}");
+        print("Server Response: ${response.body}");
+        return null;
+      }
+    } catch (e) {
+      print("Register Error: $e");
       return null;
     }
-  } catch (e) {
-    print("Register Error: $e");
-    return null;
   }
-}
   
   static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
+  }
+
+  // ===========================================================================
+  // CHAT / MESSAGING (THIS WAS MISSING)
+  // ===========================================================================
+
+  static Future<List<Map<String, dynamic>>> fetchChatMessages(int bookingId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final currentUserId = prefs.getInt('userId'); // To determine 'isMe'
+
+    final url = Uri.parse('$baseUrl/bookings/$bookingId/messages/');
+    
+    try {
+      final response = await http.get(url, headers: {'Content-Type': 'application/json'});
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        
+        // Map backend data to UI format
+        return data.map<Map<String, dynamic>>((msg) {
+          // Check if the message sender ID matches the current logged-in user
+          bool isMe = false;
+          if (currentUserId != null && msg['sender'] != null) {
+             // Assuming backend returns 'sender' as an ID (int)
+             isMe = msg['sender'] == currentUserId; 
+          }
+
+          return {
+            "text": msg['content'] ?? msg['message'] ?? "", 
+            "isMe": isMe, 
+            "timestamp": msg['created_at']
+          };
+        }).toList();
+      }
+    } catch (e) {
+      print("Error fetching messages: $e");
+    }
+    return [];
+  }
+
+  static Future<bool> sendChatMessage(int bookingId, String message) async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getInt('userId');
+
+    if (userId == null) return false;
+
+    final url = Uri.parse('$baseUrl/bookings/$bookingId/messages/');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'message': message,
+          'sender': userId, // Sending user ID so backend knows who sent it
+        }),
+      );
+
+      return response.statusCode == 201 || response.statusCode == 200;
+    } catch (e) {
+      print("Error sending message: $e");
+      return false;
+    }
   }
 
   // ===========================================================================
@@ -580,60 +644,59 @@ static Future<Map<String, dynamic>?> register(
     }
   }
 
-// ==============================
-// PREFERENCES
-// ==============================
+  // ==============================
+  // PREFERENCES
+  // ==============================
 
-static Future<bool> savePreferences({
-  required List<String> categories,
-  required Map<String, List<String>> subCategories,
-  required int budget,
-  required String location,
-}) async {
-  final prefs = await SharedPreferences.getInstance();
-  final userId = prefs.getInt('userId');
-  if (userId == null) return false;
+  static Future<bool> savePreferences({
+    required List<String> categories,
+    required Map<String, List<String>> subCategories,
+    required int budget,
+    required String location,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getInt('userId');
+    if (userId == null) return false;
 
-  final url = Uri.parse('$baseUrl/preferences/save/');
+    final url = Uri.parse('$baseUrl/preferences/save/');
 
-  try {
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        "user_id": userId,
-        "categories": categories,
-        "subCategories": subCategories,
-        "budget": budget,
-        "location": location,
-      }),
-    );
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          "user_id": userId,
+          "categories": categories,
+          "subCategories": subCategories,
+          "budget": budget,
+          "location": location,
+        }),
+      );
 
-    print("Save Pref Response: ${response.statusCode} - ${response.body}");
+      print("Save Pref Response: ${response.statusCode} - ${response.body}");
 
-    return response.statusCode == 200;
-  } catch (e) {
-    print("Save Preferences Error: $e");
+      return response.statusCode == 200;
+    } catch (e) {
+      print("Save Preferences Error: $e");
+      return false;
+    }
+  }
+
+  static Future<bool> checkPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getInt('userId');
+    if (userId == null) return false;
+
+    final url = Uri.parse('$baseUrl/preferences/check/?user_id=$userId');
+    
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['has_preferences'] ?? false;
+      }
+    } catch (e) {}
+
     return false;
   }
-}
-
-static Future<bool> checkPreferences() async {
-  final prefs = await SharedPreferences.getInstance();
-  final userId = prefs.getInt('userId');
-  if (userId == null) return false;
-
-  final url = Uri.parse('$baseUrl/preferences/check/?user_id=$userId');
-  
-  try {
-    final response = await http.get(url);
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      return data['has_preferences'] ?? false;
-    }
-  } catch (e) {}
-
-  return false;
-}
-
 }

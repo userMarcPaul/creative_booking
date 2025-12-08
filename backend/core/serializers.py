@@ -1,5 +1,5 @@
 from rest_framework import serializers # type: ignore
-from .models import User, IndustryCategory, SubCategory, CreativeProfile, Booking, ServicePackage, Product, Order , Contract
+from .models import User, IndustryCategory, SubCategory, CreativeProfile, Booking, ServicePackage, Product, Order , Contract, ChatMessage
 
 # --- NEW: Registration Serializer ---
 class RegisterSerializer(serializers.ModelSerializer):
@@ -8,7 +8,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'password', 'email', 'first_name', 'last_name', 'role']
-        read_only_fields = ['id']  # SO IMPORTANT: allow user ID in response
+        read_only_fields = ['id']
 
     def create(self, validated_data):
         user = User.objects.create_user(
@@ -22,7 +22,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 
-
 # --- EXISTING SERIALIZERS ---
 
 class UserSerializer(serializers.ModelSerializer):
@@ -34,6 +33,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_is_email_verified(self, obj):
         return hasattr(obj, 'email_otp') and obj.email_otp.is_verified
+
 class IndustryCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = IndustryCategory
@@ -84,7 +84,6 @@ class OrderSerializer(serializers.ModelSerializer):
 # -------------------------------
 #  CREATIVE PROFILE SERIALIZER
 # -------------------------------
-# FIX: Renamed class from 'CreativeSerializer' to 'CreativeProfileSerializer'
 class CreativeProfileSerializer(serializers.ModelSerializer):
     # 1. User Info
     user = UserSerializer(read_only=True)
@@ -123,14 +122,19 @@ class CreativeProfileSerializer(serializers.ModelSerializer):
         return None
 
 
+# -------------------------------
+#  BOOKING SERIALIZER
+# -------------------------------
 class BookingSerializer(serializers.ModelSerializer):
     creative_name = serializers.CharField(source='creative.user.first_name', read_only=True)
     creative_role = serializers.CharField(source='creative.sub_category.name', read_only=True)
+    client_name = serializers.CharField(source='client.username', read_only=True)
 
     class Meta:
         model = Booking
         fields = [
-            'id', 'client', 'creative', 'creative_name', 'creative_role',
+            'id', 'client', 'client_name',
+            'creative', 'creative_name', 'creative_role',
             'booking_date', 'booking_time', 'project_type',
             'requirements', 'status', 'created_at'
         ]
@@ -153,9 +157,19 @@ class ResendOTPSerializer(serializers.Serializer):
 
 
 # ===========================================
-#  USER SERIALIZER WITH VERIFICATION STATUS
-#============================================   
+#  CHAT MESSAGE SERIALIZER (UPDATED)
+# =========================================== 
 
+class ChatMessageSerializer(serializers.ModelSerializer):
+    sender_id = serializers.IntegerField(source='sender.id', read_only=True)
+    # Optional: Add sender name for easier UI display
+    sender_name = serializers.CharField(source='sender.username', read_only=True)
 
-
-
+    class Meta:
+        model = ChatMessage
+        # IMPORTANT: Ensure 'message' matches your model field name. 
+        # If your model uses 'content', change 'message' to 'content' here.
+        fields = ['id', 'booking', 'sender', 'sender_id', 'sender_name', 'message', 'created_at']
+        
+        # FIX: Make booking read-only so the serializer doesn't complain it's missing from the body
+        read_only_fields = ['booking', 'created_at']
