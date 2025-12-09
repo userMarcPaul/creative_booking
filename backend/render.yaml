@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: biliran-booking-backend
+    env: python
+    plan: free
+
+    buildCommand: |
+      pip install -r requirements.txt
+      python manage.py collectstatic --noinput
+      python manage.py migrate
+
+    startCommand: gunicorn config.wsgi:application
+
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings
+      - key: psql 'postgresql://neondb_owner:npg_kAJbVd9Rn3PH@ep-dry-snow-a1q99rzh-pooler.ap-southeast-1.aws.neon.tech/creative_booking?sslmode=require&channel_binding=require'
+        sync: false
+      - key: il^h04d4fy49xrk689j&u787o+n4ub7!ih)t6pv=7r-nac+8h!
+        sync: false
+      - key: DEBUG
+        value: "False"
+
+    autoDeploy: true
