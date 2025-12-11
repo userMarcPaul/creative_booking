@@ -12,7 +12,7 @@ class CreativeBookingApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'CreativeBook',
+      title: 'Booking Creative',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,

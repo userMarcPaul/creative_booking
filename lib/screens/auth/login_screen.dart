@@ -55,12 +55,20 @@ class _LoginScreenState extends State<LoginScreen> {
       final prefs = await SharedPreferences.getInstance();
       final role = prefs.getString('role');
       
-      
+      if (role == null) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text("No role assigned to this account."),
+      backgroundColor: Colors.red.shade400,
+    ),
+  );
+  return;
+}
       // Onboarding and Redirection Logic
-      if (role == 'admin' || role == 'Platform Admin') {
-        Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (_) => const AdminDashboardScreen()));
-      }
+      if (role.toLowerCase().contains("admin")) {
+  Navigator.pushReplacement(
+      context, MaterialPageRoute(builder: (_) => const AdminDashboardScreen()));
+}
       else if (role == 'creative' || role == 'Creative Professional') {
         bool hasProfile = await ApiService.hasCreativeProfile();
         

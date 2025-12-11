@@ -869,16 +869,24 @@ Widget _buildInboxTab() {
   //=========================================
 
   Widget _buildProfileTab() {
-    return SafeArea(
+  return SafeArea(
+    child: SingleChildScrollView(
+      padding: const EdgeInsets.only(bottom: 40),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const SizedBox(height: 32),
+
+          // --- PROFILE AVATAR ---
           CircleAvatar(
             radius: 45,
             backgroundColor: kPrimaryLight,
             child: const Icon(Icons.person_rounded, size: 50, color: kPrimaryColor),
           ),
+
           const SizedBox(height: 16),
+
+          // --- PROFILE TITLE ---
           Text(
             "My Profile",
             style: GoogleFonts.plusJakartaSans(
@@ -887,15 +895,22 @@ Widget _buildInboxTab() {
               color: kTextPrimary,
             ),
           ),
+
           const SizedBox(height: 24),
+
+          // =====================================
+          //  MENU ITEMS
+          // =====================================
+
+          // --- EDIT PROFILE ---
           ListTile(
             leading: const Icon(Icons.edit_rounded, color: kPrimaryColor),
             title: Text("Edit Profile", style: GoogleFonts.plusJakartaSans()),
             trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
             onTap: () {},
           ),
-          
-          // --- OPEN FAVORITES SCREEN ---
+
+          // --- FAVORITES ---
           ListTile(
             leading: const Icon(Icons.favorite_rounded, color: kPrimaryColor),
             title: Text("Favorites", style: GoogleFonts.plusJakartaSans()),
@@ -914,14 +929,20 @@ Widget _buildInboxTab() {
               );
             },
           ),
-          
+
+          // --- SETTINGS ---
           ListTile(
             leading: const Icon(Icons.settings_rounded, color: kPrimaryColor),
             title: Text("Settings", style: GoogleFonts.plusJakartaSans()),
             trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
             onTap: () {},
           ),
-          const Spacer(),
+
+          const SizedBox(height: 60),
+
+          // =====================================
+          //  LOGOUT BUTTON
+          // =====================================
           Padding(
             padding: const EdgeInsets.all(20),
             child: ElevatedButton(
@@ -942,11 +963,12 @@ Widget _buildInboxTab() {
                 ),
               ),
             ),
-          )
+          ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildHeader() {
     return Container(

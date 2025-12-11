@@ -12,18 +12,20 @@ import '../models/product.dart';
 import '../models/order.dart';
 
 class ApiService {
-
+  static const bool isProduction = bool.fromEnvironment('dart.vm.product');
 
   static String get baseUrl {
-  if (kReleaseMode) {
-    return 'https://biliran-booking-creative.onrender.com/api';
-  } else if (kIsWeb) {
-    return 'http://127.0.0.1:8000/api';
-  } else {
-    return 'https://biliran-booking-creative.onrender.com/api';
+    if (isProduction) {
+      // Running a built APK / Release Mode
+      return 'https://biliran-booking-creative.onrender.com';
+    } else if (kIsWeb) {
+      // Running in the browser
+      return 'http://127.0.0.1:8000/api';
+    } else {
+      // Running in Android Emulator Debug Mode
+      return 'https://biliran-booking-creative.onrender.com'; 
+    }
   }
-}
-
 
   // ===========================================================================
   // OTP VERIFICATION
@@ -607,7 +609,7 @@ static Future<void> logout() async {
     final userId = prefs.getInt('userId');
     if (userId == null) return [];
 
-    final url = Uri.parse('$baseUrl/orders/?creative_user_id=$userId');
+    final url = Uri.parse('$baseUrl/orders/?client_id=$userId');
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
