@@ -3,7 +3,7 @@
 import 'dart:async'; // Required for Timer
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../services/api_service.dart'; // Import your ApiService
+import '../../services/api_service.dart'; // Import your ApiService
 
 class ChatScreen extends StatefulWidget {
   final int bookingId;

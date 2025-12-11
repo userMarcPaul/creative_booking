@@ -1,14 +1,14 @@
 import 'package:flutter/foundation.dart'; // Added for kIsWeb check
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../services/api_service.dart';
-import '../models/booking.dart';
-import '../models/order.dart';
-import '../models/product.dart';
-import 'login_screen.dart';
+import '../../services/api_service.dart';
+import '../../models/booking.dart';
+import '../../models/order.dart';
+import '../../models/product.dart';
+import '../auth/login_screen.dart';
 import 'create_product_screen.dart';
-import 'chat_screen.dart'; 
-import 'booking_detail_screen.dart'; 
+import '../shared/chat_screen.dart'; 
+import '../shared/booking_detail_screen.dart'; 
 
 class ProviderDashboardScreen extends StatefulWidget {
   const ProviderDashboardScreen({super.key});

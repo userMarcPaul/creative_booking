@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../models/industry.dart';
-import '../models/sub_category.dart';
-import '../services/api_service.dart';
-import 'home_screen.dart';
+import '../../models/industry.dart';
+import '../../models/sub_category.dart';
+import '../../services/api_service.dart';
+import '../client/home_screen.dart';
 
 class InterestSelectionScreen extends StatefulWidget {
   final bool isEditMode;

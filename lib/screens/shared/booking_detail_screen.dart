@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../models/booking.dart';
-import '../services/api_service.dart'; 
+import '../../models/booking.dart';
+import '../../services/api_service.dart'; 
 import 'chat_screen.dart';
 
 class BookingDetailScreen extends StatefulWidget {

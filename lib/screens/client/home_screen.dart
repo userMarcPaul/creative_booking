@@ -7,20 +7,20 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Required for favorites persistence
-import '../services/api_service.dart';
-import '../models/industry.dart';
-import '../models/sub_category.dart';
-import '../models/product.dart';
-import '../models/creative.dart';
-import '../models/booking.dart';
-import '../models/order.dart';
+import '../../services/api_service.dart';
+import '../../models/industry.dart';
+import '../../models/sub_category.dart';
+import '../../models/product.dart';
+import '../../models/creative.dart';
+import '../../models/booking.dart';
+import '../../models/order.dart';
 import 'sub_category_screen.dart';
 import 'my_bookings_screen.dart';
 import 'creative_list_screen.dart';
-import 'login_screen.dart';
-import 'interest_selection_screen.dart';
+import '../auth/login_screen.dart';
+import '../auth/interest_selection_screen.dart';
 import 'creative_detail_screen.dart';
-import 'chat_screen.dart';
+import '../shared/chat_screen.dart';
 
 // Define theme colors for consistency
 const kPrimaryColor = Color(0xFF4F46E5); // Indigo 600

@@ -3,9 +3,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import '../models/booking.dart';
-import '../services/api_service.dart';
-import 'booking_detail_screen.dart'; 
+import '../../models/booking.dart';
+import '../../services/api_service.dart';
+import '../shared/booking_detail_screen.dart'; 
 
 class MyBookingsScreen extends StatefulWidget {
   const MyBookingsScreen({super.key});

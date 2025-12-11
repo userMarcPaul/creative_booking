@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../models/industry.dart';
-import '../models/sub_category.dart';
-import '../services/api_service.dart';
+import '../../models/industry.dart';
+import '../../models/sub_category.dart';
+import '../../services/api_service.dart';
 import 'creative_list_screen.dart'; // Navigate to the list of people
 
 class SubCategoryScreen extends StatefulWidget {

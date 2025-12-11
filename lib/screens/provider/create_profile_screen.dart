@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../services/api_service.dart';
-import '../models/sub_category.dart';
-import '../models/industry.dart';
+import '../../services/api_service.dart';
+import '../../models/sub_category.dart';
+import '../../models/industry.dart';
 import 'provider_dashboard_screen.dart';
 
 class CreateProfileScreen extends StatefulWidget {

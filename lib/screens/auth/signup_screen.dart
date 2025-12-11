@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../services/api_service.dart';
+import '../../services/api_service.dart';
 import 'verify_email_screen.dart';
 
 class SignupScreen extends StatefulWidget {

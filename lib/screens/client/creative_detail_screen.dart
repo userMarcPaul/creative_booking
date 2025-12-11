@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart'; // For kIsWeb
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../models/creative.dart';
-import '../models/product.dart';
-import '../services/api_service.dart';
+import '../../models/creative.dart';
+import '../../models/product.dart';
+import '../../services/api_service.dart';
 import 'booking_form_screen.dart';
 
 class CreativeDetailScreen extends StatefulWidget {

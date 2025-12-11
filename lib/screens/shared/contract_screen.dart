@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../services/api_service.dart'; // Ensure you have this for baseUrl
+import '../../services/api_service.dart'; // Ensure you have this for baseUrl
 
 class ContractScreen extends StatefulWidget {
   final int bookingId;
